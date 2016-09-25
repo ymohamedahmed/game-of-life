@@ -7,6 +7,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -287,7 +288,7 @@ public class GameOfLife{
 		}
 		
 	}
+}
 
 	
 
-}
