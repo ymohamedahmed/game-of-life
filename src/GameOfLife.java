@@ -2,12 +2,13 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Random;
+import java.util.Scanner;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -18,29 +19,37 @@ public class GameOfLife {
     boolean setup = false;
     Pane pane;
     static ArrayList<ArrayList<Cell>> cells;
-    private final static int CELL_X_SIZE = 30;
-    private final static int CELL_Y_SIZE = 30;
-    // indexed by number of living cells in a row - 1
-    private static int[] frequencies = new int[1920 / CELL_X_SIZE];
+    private int width = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
+    private int height = (int) Toolkit.getDefaultToolkit().getScreenSize().getHeight();
+    private int cellSize = 30;
+    private boolean sound = false;
 
     public static void main(String[] args) {
 	GameOfLife gol = new GameOfLife();
 	gol.setupFrame();
-	gol.setupFrequencies();
-	Timer timer = new Timer();
-	timer.schedule(new PlaySound(), 0, 400);
-
+	if (gol.sound) {
+	    Timer timer = new Timer();
+	    timer.schedule(gol.new PlaySound(), 0, 400);
+	}
     }
 
     private void setupFrame() {
 	JFrame frame = new JFrame();
-	frame.setSize(1920, 1080);
+	frame.setSize(width, height);
 	frame.setUndecorated(true);
 	frame.setResizable(false);
 	frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
 	pane = new Pane();
-
+	Scanner scan = new Scanner(System.in);
+	System.out.println("Input square size");
+	cellSize = (int) scan.nextInt();
+	String response;
+	do {
+	    System.out.println("Enable sound? (Y/N)");
+	    response = scan.next().toLowerCase();
+	} while (!response.equals("y") && !response.equals("n"));
+	scan.close();
+	sound = response.equals("y");
 	cells = pane.genCells();
 	pane.selectSetup(cells);
 
@@ -48,25 +57,6 @@ public class GameOfLife {
 	frame.addKeyListener(kl);
 	frame.add(pane);
 	frame.setVisible(true);
-    }
-
-    private void setupFrequencies() {
-	int maxLiveCountRow = 1920 / CELL_X_SIZE;
-	for (int i = 0; i < maxLiveCountRow; i++) {
-	    boolean valid = false;
-	    int freq = 200 + (3000 * i / maxLiveCountRow);
-	    int pos = 0;
-	    while (!valid) {
-		pos = new Random().nextInt(maxLiveCountRow);
-		if (frequencies[pos] == 0) {
-		    valid = true;
-		}
-	    }
-	    frequencies[pos] = freq;
-	}
-	for (int x : frequencies) {
-	    System.out.println(x);
-	}
     }
 
     public class Cell {
@@ -131,8 +121,8 @@ public class GameOfLife {
 		public void mousePressed(MouseEvent e) {
 		    if (!setup) {
 			// Finds the column and row from the click
-			int column = (int) Math.floor(e.getX() / CELL_X_SIZE);
-			int row = (int) Math.floor(e.getY() / CELL_Y_SIZE);
+			int column = (int) Math.floor(e.getX() / cellSize);
+			int row = (int) Math.floor(e.getY() / cellSize);
 
 			// Sets the selected cell to living
 			cells.get(row).get(column).origState = State.LIVING;
@@ -243,11 +233,11 @@ public class GameOfLife {
 
 	    // Creates the grid by generating all the rectangles using the sizes
 	    // specified
-	    for (int yPos = 0; yPos <= 1080 - CELL_Y_SIZE; yPos += CELL_Y_SIZE) {
+	    for (int yPos = 0; yPos <= height - cellSize; yPos += cellSize) {
 		ArrayList<Cell> temp = new ArrayList<Cell>();
-		for (int xPos = 0; xPos <= 1920 - CELL_X_SIZE; xPos += CELL_X_SIZE) {
+		for (int xPos = 0; xPos <= width - cellSize; xPos += cellSize) {
 
-		    Rectangle rectangle = new Rectangle(xPos, yPos, CELL_X_SIZE, CELL_Y_SIZE);
+		    Rectangle rectangle = new Rectangle(xPos, yPos, cellSize, cellSize);
 		    Cell cell = new Cell();
 		    cell.rect = rectangle;
 		    cell.origState = State.DEAD;
@@ -292,9 +282,8 @@ public class GameOfLife {
 
     }
 
-    static class PlaySound extends TimerTask {
+    class PlaySound extends TimerTask {
 
-	// Alternative frequency generation
 	public void run() {
 	    for (ArrayList<Cell> cell : cells) {
 		int liveCount = 0;
@@ -303,10 +292,10 @@ public class GameOfLife {
 			liveCount++;
 		    }
 		}
+		// Generate frequency based on the number of living cells
 		if (liveCount != 0) {
-		    int maxLiveCountRow = 1920 / CELL_X_SIZE;
+		    int maxLiveCountRow = width / cellSize;
 		    int freq = 200 + (20000 * liveCount / maxLiveCountRow);
-		    // int freq = frequencies[liveCount - 1];
 		    new Tone(freq, 0.1);
 		}
 
