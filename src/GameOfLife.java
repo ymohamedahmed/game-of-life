@@ -124,8 +124,10 @@ public class GameOfLife {
 			int column = (int) Math.floor(e.getX() / cellSize);
 			int row = (int) Math.floor(e.getY() / cellSize);
 
-			// Sets the selected cell to living
-			cells.get(row).get(column).origState = State.LIVING;
+			// Sets the selected cell to living if dead and dead if
+			// living
+			cells.get(row).get(column).origState = (cells.get(row).get(column).origState == State.DEAD)
+				? State.LIVING : State.DEAD;
 		    }
 		}
 
